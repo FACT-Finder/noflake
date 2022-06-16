@@ -1,3 +1,3 @@
 # Noflake
 
-A web service to automatically detect and track you flaky tests based on junit reports.
+A web service to automatically detect and track your flaky tests based on junit reports.
