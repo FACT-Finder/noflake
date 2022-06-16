@@ -1,0 +1,105 @@
+openapi: "3.0.0"
+info:
+  title: Noflake
+  version: 1.0.0
+  description: |
+    The API documentation of noflake
+  contact:
+    name: GitHub
+    url: https://github.com/FACT-Finder/noflake
+    email: ff-dev@fact-finder.com
+  license:
+    name: "AGPL-3"
+    url: "https://github.com/FACT-Finder/noflake/blob/main/LICENSE"
+paths:
+  /flakes:
+    get:
+      operationId: getFlakyTests
+      summary: Get the list of known flaky tests
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FlakyTest"
+        default:
+          description: >-
+            Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+  /report/{commit}:
+    post:
+      operationId: addReport
+      summary: Upload a junit report
+      parameters:
+        - in: path
+          name: commit
+          schema:
+            type: string
+          required: true
+          description: Commit SHA that corresponds to the sent junit reports
+        - in: query
+          name: url
+          schema:
+            type: string
+            format: url
+          required: false
+          description: URL to the build of the junit reports
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                report:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+      responses:
+        "204":
+          description: No Content
+        default:
+          description: >-
+            Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+components:
+  schemas:
+    FlakyTest:
+      type: object
+      example: >-
+        {
+          "test": "mytest"
+        }
+      required:
+        - test
+      properties:
+        test:
+          type: string
+          description: The name of the test
+        last_fail:
+          type: string
+          description: The time of the last failure
+        total_fails:
+          type: integer
+          description: The total number of failures
+    ApiError:
+      type: object
+      required:
+        - error
+        - description
+      properties:
+        error:
+          type: string
+          example: Bad Request
+        description:
+          type: string
+          example: "could not parse request: invalid json: EOF"

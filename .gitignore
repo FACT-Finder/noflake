@@ -21,7 +21,10 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 /ui/build/KEEP
-/perfably
+/noflake
 /data
 *_generated.go
 swagger/dist/
+/junit-reports/
+
+*.sqlite3

@@ -1,0 +1,39 @@
+project_name: noflake
+before:
+  hooks:
+    - go mod download
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+    goarm:
+    flags:
+      - '-tags="netgo osusergo"'
+    ldflags:
+      - '-s'
+      - '-w'
+archives:
+  - files:
+      - LICENSE
+      - README.md
+checksum:
+changelog:
+  skip: true
+dockers:
+  - goos: linux
+    goarch: amd64
+    goarm: ''
+    ids: [noflake]
+    image_templates:
+      - "noflake/noflake:unstable"
+      - "noflake/noflake:{{ .RawVersion }}"
+      - "noflake/noflake:{{ .Major }}"
+    dockerfile: Dockerfile
+    build_flag_templates:
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
