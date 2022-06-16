@@ -8,24 +8,13 @@ jobs:
       - uses: actions/setup-go@v2
         with:
           go-version: 1.18.x
-      - uses: actions/setup-node@v1
-        with:
-          node-version: "16"
       - uses: actions/cache@v2
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-golang-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ui/node_modules
-          key: ${{ runner.os }}-node_modules-${{ hashFiles('**/yarn.lock') }}
-          restore-keys: ${{ runner.os }}-node_modules-
       - uses: actions/checkout@v2
-      - run: (cd ui && yarn)
-      - run: (cd ui && yarn build)
       - run: go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@v1.11.0
       - run: go generate ./...
       - run: go test ./...
