@@ -32,7 +32,7 @@ func (a *api) AddReport(ctx echo.Context, commitSha string, params AddReportPara
 
 	files := formdata.File["report"]
 
-	tests := make([]model.TestResult, 10)
+	tests := make([]model.TestResult, 0)
 	for i := range files {
 		file, err := files[i].Open()
 		if err != nil {
