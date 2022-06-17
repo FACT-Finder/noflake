@@ -27,9 +27,9 @@ dockers:
     goarm: ''
     ids: [noflake]
     image_templates:
-      - "noflake/noflake:unstable"
-      - "noflake/noflake:{{ .RawVersion }}"
-      - "noflake/noflake:{{ .Major }}"
+      - "ghcr.io/noflake/noflake:unstable"
+      - "ghcr.io/noflake/noflake:{{ .RawVersion }}"
+      - "ghcr.io/noflake/noflake:{{ .Major }}"
     dockerfile: Dockerfile
     build_flag_templates:
       - "--label=org.opencontainers.image.created={{.Date}}"
