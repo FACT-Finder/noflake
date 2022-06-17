@@ -26,8 +26,8 @@ func InsertTests(db *sqlx.DB, tests []model.TestResult, upload model.Upload) err
 		return err
 	}
 
-	duplicates := make(map[string]bool, 0)
-	results := make(map[int]model.Result)
+	duplicates := map[string]bool{}
+	results := map[int]model.Result{}
 	var testID int
 	for _, test := range tests {
 		err = stmt.QueryRowx(test.Name).Scan(&testID)
@@ -104,15 +104,14 @@ func GetFlakyTests(db *sqlx.DB) ([]FlakyTest, error) {
 
 	tests := []FlakyTest{}
 	for rows.Next() {
-		var name string
-		var totalFails int
+		var test FlakyTest
 		var lastFailTimestamp int64
-		err = rows.Scan(&name, &totalFails, &lastFailTimestamp)
+		err = rows.Scan(&test.Name, &test.TotalFails, &lastFailTimestamp)
 		if err != nil {
 			return nil, err
 		}
-		lastFail := time.Unix(lastFailTimestamp, 0)
-		tests = append(tests, FlakyTest{Name: name, TotalFails: totalFails, LastFail: lastFail})
+		test.LastFail = time.Unix(lastFailTimestamp, 0)
+		tests = append(tests, test)
 	}
 
 	return tests, nil

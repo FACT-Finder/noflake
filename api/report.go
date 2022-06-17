@@ -17,7 +17,12 @@ func (a *api) AddReport(ctx echo.Context, commitSha string, params AddReportPara
 		return err
 	}
 
-	upload, err := database.CreateUpload(a.db, model.Upload{CommitID: *commit.ID, Time: time.Now().UTC(), URL: params.Url})
+	upload, err := database.CreateUpload(a.db,
+		model.Upload{
+			CommitID: *commit.ID,
+			Time:     time.Now().UTC(),
+			URL:      params.Url,
+		})
 	if err != nil {
 		return err
 	}
@@ -25,27 +30,31 @@ func (a *api) AddReport(ctx echo.Context, commitSha string, params AddReportPara
 	r := ctx.Request()
 	err = r.ParseMultipartForm(200000)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid multipart request: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest,
+			fmt.Sprintf("invalid multipart request: %s", err))
 	}
 
 	formdata := r.MultipartForm
 
 	files := formdata.File["report"]
 
-	tests := make([]model.TestResult, 0)
-	for i := range files {
-		file, err := files[i].Open()
+	tests := []model.TestResult{}
+	for _, file := range files {
+		fileHandle, err := file.Open()
 		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("couldn't open file: %s", err))
+			return echo.NewHTTPError(http.StatusBadRequest,
+				fmt.Sprintf("couldn't open file: %s", err))
 		}
-		defer file.Close()
+		defer fileHandle.Close()
 		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("couldn't read file: %s", err))
+			return echo.NewHTTPError(http.StatusBadRequest,
+				fmt.Sprintf("couldn't read file: %s", err))
 		}
 
-		suites, err := junit.IngestReader(file)
+		suites, err := junit.IngestReader(fileHandle)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("couldn't parse file %s: %s", files[i].Filename, err))
+			return echo.NewHTTPError(http.StatusBadRequest,
+				fmt.Sprintf("couldn't parse file %s: %s", file.Filename, err))
 		}
 
 		for _, suite := range suites {
@@ -68,7 +77,8 @@ func (a *api) AddReport(ctx echo.Context, commitSha string, params AddReportPara
 
 	err = database.InsertTests(a.db, tests, *upload)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("couldn't store test results: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest,
+			fmt.Sprintf("couldn't store test results: %s", err))
 	}
 
 	return ctx.NoContent(http.StatusNoContent)

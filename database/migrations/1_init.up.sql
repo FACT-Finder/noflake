@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS commits (
 CREATE TABLE IF NOT EXISTS uploads (
     id INTEGER PRIMARY KEY,
     commit_id INTEGER NOT NULL REFERENCES commits (id),
-    time INTEGER NOT NULL,
+    time DATETIME NOT NULL,
     url TEXT
 );
 
