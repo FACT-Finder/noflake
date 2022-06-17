@@ -26,5 +26,6 @@ yarn-error.log*
 *_generated.go
 swagger/dist/
 /junit-reports/
+/dist/
 
 *.sqlite3
