@@ -31,10 +31,17 @@ func main() {
 				EnvVars: []string{"NOFLAKE_DB"},
 				Value:   "noflake.sqlite3",
 			},
+			&cli.StringFlag{
+				Name:     "token",
+				Usage:    "token to secure the POST endpoints",
+				EnvVars:  []string{"NOFLAKE_TOKEN"},
+				Required: true,
+			},
 		},
 		Action: func(c *cli.Context) error {
 			db := database.New(c.String("db"))
-			webapi := api.New(db)
+			token := c.String("token")
+			webapi := api.New(db, token)
 
 			listenAddr := c.String("address")
 			log.Info().Str("address", listenAddr).Msg("HTTP")
