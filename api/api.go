@@ -47,7 +47,6 @@ func New(db *sqlx.DB, token string) *echo.Echo {
 	return app
 }
 
-
 func secure(token string, handler echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		user, pass, ok := c.Request().BasicAuth()
@@ -56,7 +55,7 @@ func secure(token string, handler echo.HandlerFunc) echo.HandlerFunc {
 			return unauthorized(c, "noflake", "no credentials provided")
 		}
 
-		if user != "token" || pass != token{
+		if user != "token" || pass != token {
 			return unauthorized(c, "noflake", "wrong credentials")
 		}
 
