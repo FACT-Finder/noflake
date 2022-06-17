@@ -26,20 +26,29 @@ func InsertTests(db *sqlx.DB, tests []model.TestResult, upload model.Upload) err
 		return err
 	}
 
-	results := make([]model.Result, 0, len(tests))
+	duplicates := make(map[string]bool, 0)
+	results := make(map[int]model.Result)
 	var testID int
 	for _, test := range tests {
 		err = stmt.QueryRowx(test.Name).Scan(&testID)
 		if err != nil {
 			return err
 		}
-		results = append(results, model.Result{
-			TestID:   testID,
-			UploadID: *upload.ID,
-			CommitID: upload.CommitID,
-			Success:  test.Success,
-			Output:   test.Output,
-		})
+
+		if result, exists := results[testID]; exists {
+			duplicates[test.Name] = true
+			if !test.Success {
+				result.Success = false
+			}
+		} else {
+			results[testID] = model.Result{
+				TestID:   testID,
+				UploadID: *upload.ID,
+				CommitID: upload.CommitID,
+				Success:  test.Success,
+				Output:   test.Output,
+			}
+		}
 	}
 
 	stmt, err = db.Preparex(
@@ -58,6 +67,14 @@ func InsertTests(db *sqlx.DB, tests []model.TestResult, upload model.Upload) err
 				Msg("couldn't insert into results")
 			return err
 		}
+	}
+
+	if len(duplicates) > 0 {
+		names := make([]string, 0, len(duplicates))
+		for k := range duplicates {
+			names = append(names, k)
+		}
+		log.Warn().Strs("tests", names).Msg("upload contains duplicate test names")
 	}
 
 	return nil
