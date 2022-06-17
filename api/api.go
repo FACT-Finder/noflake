@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/FACT-Finder/noflake/swagger"
 	"github.com/jmoiron/sqlx"
@@ -49,22 +50,25 @@ func New(db *sqlx.DB, token string) *echo.Echo {
 
 func secure(token string, handler echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		user, pass, ok := c.Request().BasicAuth()
+		parts := strings.Fields(c.Request().Header.Get("Authorization"))
 
-		if !ok {
-			return unauthorized(c, "noflake", "no credentials provided")
+		if len(parts) == 0 {
+			return unauthorized(c, "missing authorization header")
 		}
 
-		if user != "token" || pass != token {
-			return unauthorized(c, "noflake", "wrong credentials")
+		if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
+			return unauthorized(c, "invalid authorization header")
+		}
+
+		if parts[1] != token {
+			return unauthorized(c, "invalid token")
 		}
 
 		return handler(c)
 	}
 }
 
-func unauthorized(c echo.Context, realm, reason string) error {
-	c.Response().Header().Set("WWW-Authenticate", `Basic realm="`+realm+`"`)
+func unauthorized(c echo.Context, reason string) error {
 	return echo.NewHTTPError(http.StatusUnauthorized, reason)
 }
 
