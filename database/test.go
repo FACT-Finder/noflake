@@ -1,6 +1,8 @@
 package database
 
 import (
+	"time"
+
 	"github.com/FACT-Finder/noflake/model"
 	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog/log"
@@ -40,12 +42,14 @@ func InsertTests(db *sqlx.DB, tests []model.TestResult, upload model.Upload) err
 		})
 	}
 
-	stmt, err = db.Preparex("INSERT INTO results (test_id, upload_id, commit_id, success, output) VALUES (?,?,?,?,?)")
+	stmt, err = db.Preparex(
+		"INSERT INTO results (test_id, upload_id, commit_id, success, output) VALUES (?,?,?,?,?)")
 	if err != nil {
 		return err
 	}
 	for _, result := range results {
-		_, err = stmt.Exec(result.TestID, result.UploadID, result.CommitID, result.Success, result.Output)
+		_, err = stmt.Exec(
+			result.TestID, result.UploadID, result.CommitID, result.Success, result.Output)
 		if err != nil {
 			log.Err(err).
 				Int("test", result.TestID).
@@ -60,16 +64,17 @@ func InsertTests(db *sqlx.DB, tests []model.TestResult, upload model.Upload) err
 }
 
 func GetFlakyTests(db *sqlx.DB) ([]FlakyTest, error) {
-	tests := []FlakyTest{}
-
-	err := db.Select(&tests, `
+	rows, err := db.Queryx(`
 	WITH flaky_tests (id, name) AS (
 		SELECT tests.id, tests.name FROM results
 		LEFT JOIN tests ON tests.id = results.test_id
 		GROUP BY results.test_id, results.commit_id
 		HAVING COUNT(DISTINCT results.success) > 1
 	)
-	SELECT flaky_tests.name AS name, count(results.success) as total_fails, MAX(uploads.time) as last_fail
+	SELECT
+		flaky_tests.name AS name,
+		count(results.success) as total_fails,
+		MAX(uploads.time) as last_fail
 	FROM results
 	JOIN flaky_tests ON results.test_id = flaky_tests.id
 	LEFT JOIN uploads ON uploads.id = results.upload_id
@@ -80,11 +85,24 @@ func GetFlakyTests(db *sqlx.DB) ([]FlakyTest, error) {
 		return nil, err
 	}
 
+	tests := []FlakyTest{}
+	for rows.Next() {
+		var name string
+		var totalFails int
+		var lastFailTimestamp int64
+		err = rows.Scan(&name, &totalFails, &lastFailTimestamp)
+		if err != nil {
+			return nil, err
+		}
+		lastFail := time.Unix(lastFailTimestamp, 0)
+		tests = append(tests, FlakyTest{Name: name, TotalFails: totalFails, LastFail: lastFail})
+	}
+
 	return tests, nil
 }
 
 type FlakyTest struct {
-	Name       string `db:"name"`
-	TotalFails int    `db:"total_fails"`
-	LastFail   string `db:"last_fail"`
+	Name       string    `db:"name"`
+	TotalFails int       `db:"total_fails"`
+	LastFail   time.Time `db:"last_fail"`
 }

@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/FACT-Finder/noflake/database"
 	"github.com/labstack/echo/v4"
@@ -18,7 +19,9 @@ func (a *api) GetFlakyTests(ctx echo.Context) error {
 	for _, test := range tests {
 		totalFails := test.TotalFails
 		lastFail := test.LastFail
-		flakes = append(flakes, FlakyTest{Test: test.Name, TotalFails: &totalFails, LastFail: &lastFail})
+		lastFailStr := lastFail.UTC().Format(time.RFC3339)
+		flakes = append(flakes,
+			FlakyTest{Test: test.Name, TotalFails: &totalFails, LastFail: &lastFailStr})
 	}
 
 	ctx.JSON(http.StatusOK, flakes)
