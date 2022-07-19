@@ -83,7 +83,7 @@ func InsertTests(db *sqlx.DB, tests []model.TestResult, upload model.Upload) err
 func GetFlakyTests(db *sqlx.DB) ([]FlakyTest, error) {
 	rows, err := db.Queryx(`
 	WITH flaky_tests (id, name) AS (
-		SELECT tests.id, tests.name FROM results
+		SELECT DISTINCT(tests.id), tests.name FROM results
 		LEFT JOIN tests ON tests.id = results.test_id
 		GROUP BY results.test_id, results.commit_id
 		HAVING COUNT(DISTINCT results.success) > 1
