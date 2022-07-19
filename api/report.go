@@ -12,6 +12,17 @@ import (
 )
 
 func (a *api) AddReport(ctx echo.Context, commitSha string, params AddReportParams) error {
+	r := ctx.Request()
+	err := r.ParseMultipartForm(200000)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest,
+			fmt.Sprintf("invalid multipart request: %s", err))
+	}
+
+	formdata := r.MultipartForm
+
+	files := formdata.File["report"]
+
 	commit, err := database.CreateOrGetCommit(a.db, model.Commit{CommitSha: commitSha})
 	if err != nil {
 		return err
@@ -27,16 +38,6 @@ func (a *api) AddReport(ctx echo.Context, commitSha string, params AddReportPara
 		return err
 	}
 
-	r := ctx.Request()
-	err = r.ParseMultipartForm(200000)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest,
-			fmt.Sprintf("invalid multipart request: %s", err))
-	}
-
-	formdata := r.MultipartForm
-
-	files := formdata.File["report"]
 
 	tests := []model.TestResult{}
 	for _, file := range files {
