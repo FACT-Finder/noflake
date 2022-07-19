@@ -37,8 +37,6 @@ func (a *api) AddReport(ctx echo.Context, commitSha string, params AddReportPara
 	if err != nil {
 		return err
 	}
-
-
 	tests := []model.TestResult{}
 	for _, file := range files {
 		fileHandle, err := file.Open()
