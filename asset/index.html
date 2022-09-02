@@ -1,0 +1,16 @@
+{{template "start" .}}
+<table>
+  <tr>
+    <th>Last Failure</th>
+    <th>Total Failures</th>
+    <th>Test</th>
+  </tr>
+  {{ range .Flakes }}
+  <tr>
+    <td>{{.LastFail}}</td>
+    <td>{{.TotalFails}}</td>
+    <td><a href="/ui/test/{{.Test}}/fails">{{.Test}}</a></td>
+  </tr>
+  {{ end }}
+</table>
+{{template "end" .}}

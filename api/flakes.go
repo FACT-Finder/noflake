@@ -8,10 +8,10 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func (a *api) GetFlakyTests(ctx echo.Context) error {
+func (a *api) flakyTests() ([]FlakyTest, error) {
 	tests, err := database.GetFlakyTests(a.db)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	flakes := []FlakyTest{}
@@ -24,6 +24,13 @@ func (a *api) GetFlakyTests(ctx echo.Context) error {
 			FlakyTest{Test: test.Name, TotalFails: &totalFails, LastFail: &lastFailStr})
 	}
 
-	ctx.JSON(http.StatusOK, flakes)
-	return nil
+	return flakes, nil
+}
+
+func (a *api) GetFlakyTests(ctx echo.Context) error {
+	flakes, err := a.flakyTests()
+	if err != nil {
+		return err
+	}
+	return ctx.JSON(http.StatusOK, flakes)
 }

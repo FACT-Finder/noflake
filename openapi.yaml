@@ -32,6 +32,33 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ApiError"
+  /test/{name}/fails:
+    get:
+      operationId: getFailedBuilds
+      summary: Get the list of failed builds
+      parameters:
+        - in: path
+          name: name
+          schema:
+            type: string
+          required: true
+          description: The test name
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FailedBuild"
+        default:
+          description: >-
+            Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
   /report/{commit}:
     post:
       operationId: addReport
@@ -91,6 +118,24 @@ components:
         total_fails:
           type: integer
           description: The total number of failures
+    FailedBuild:
+      type: object
+      required:
+        - commitSHA
+        - date
+      properties:
+        commitSHA:
+          type: string
+          description: The commit sha of the failed build
+        url:
+          type: string
+          description: The url of the failed build
+        date:
+          type: string
+          description: The time of the failed failure
+        output:
+          type: string
+          description: The test output
     ApiError:
       type: object
       required:

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/FACT-Finder/noflake/asset"
 	"github.com/FACT-Finder/noflake/swagger"
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
@@ -13,7 +14,9 @@ import (
 
 func New(db *sqlx.DB, token string) *echo.Echo {
 	app := echo.New()
+	app.Pre(middleware.RemoveTrailingSlash())
 	app.Use(middleware.Recover())
+	app.Renderer = asset.Renderer
 	app.HTTPErrorHandler = func(err error, c echo.Context) {
 		code := http.StatusInternalServerError
 		message := ""
@@ -29,15 +32,37 @@ func New(db *sqlx.DB, token string) *echo.Echo {
 		})
 	}
 
-	wrapper := ServerInterfaceWrapper{
-		Handler: &api{
-			db:    db,
-			token: token,
-		},
-	}
+	api := &api{db: db, token: token}
+	wrapper := ServerInterfaceWrapper{Handler: api}
 
+	app.GET("/", func(c echo.Context) error {
+		return c.Redirect(http.StatusTemporaryRedirect, "/ui")
+	})
 	app.POST("/report/:commit", secure(token, wrapper.AddReport))
 	app.GET("/flakes", wrapper.GetFlakyTests)
+	app.GET("/test/:name/fails", wrapper.GetFailedBuilds)
+	app.GET("/ui", func(c echo.Context) error {
+		flakes, err := api.flakyTests()
+		if err != nil {
+			return err
+		}
+		return c.Render(http.StatusOK, "index.html", map[string]interface{}{
+			"Title":  "Overview",
+			"Flakes": flakes,
+		})
+	})
+	app.GET("/ui/test/:name/fails", func(c echo.Context) error {
+		name := c.Param("name")
+		fails, err := api.failedBuilds(name)
+		if err != nil {
+			return err
+		}
+		return c.Render(http.StatusOK, "fails.html", map[string]interface{}{
+			"Title": "Failed Builds " + name,
+			"Fails": fails,
+		})
+	})
+	app.StaticFS("/ui", asset.Static)
 
 	spec, err := GetSwagger()
 	if err != nil {
