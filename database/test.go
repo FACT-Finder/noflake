@@ -97,6 +97,7 @@ func GetFlakyTests(db *sqlx.DB) ([]FlakyTest, error) {
 	LEFT JOIN uploads ON uploads.id = results.upload_id
 	WHERE results.success == false
 	GROUP BY test_id
+	ORDER BY last_fail desc
 	`)
 	if err != nil {
 		return nil, err
