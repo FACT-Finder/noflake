@@ -1,0 +1,19 @@
+body {
+  font-family: Verdana;
+  line-height: 1.5;
+  font-size: 16px;
+}
+.container {
+  margin: 0 auto;
+  padding: 0 10px;
+  box-sizing: border-box;
+}
+table {
+  border-collapse: collapse;
+}
+table,
+th,
+td {
+  border: 1px solid;
+  padding: 5px;
+}
