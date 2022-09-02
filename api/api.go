@@ -14,6 +14,7 @@ import (
 
 func New(db *sqlx.DB, token string) *echo.Echo {
 	app := echo.New()
+	app.Pre(middleware.RemoveTrailingSlash())
 	app.Use(middleware.Recover())
 	app.Renderer = asset.Renderer
 	app.HTTPErrorHandler = func(err error, c echo.Context) {
@@ -34,6 +35,9 @@ func New(db *sqlx.DB, token string) *echo.Echo {
 	api := &api{db: db, token: token}
 	wrapper := ServerInterfaceWrapper{Handler: api}
 
+	app.GET("/", func(c echo.Context) error {
+		return c.Redirect(http.StatusTemporaryRedirect, "/ui")
+	})
 	app.POST("/report/:commit", secure(token, wrapper.AddReport))
 	app.GET("/flakes", wrapper.GetFlakyTests)
 	app.GET("/test/:name/fails", wrapper.GetFailedBuilds)
