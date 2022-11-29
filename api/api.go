@@ -40,7 +40,8 @@ func New(db *sqlx.DB, token string) *echo.Echo {
 	})
 	app.POST("/report/:commit", secure(token, wrapper.AddReport))
 	app.GET("/flakes", wrapper.GetFlakyTests)
-	app.GET("/test/:name/fails", wrapper.GetFailedBuilds)
+	app.GET("/test/:id/fails", wrapper.GetFailedBuilds)
+	app.GET("/test/:test_id/upload/:upload_id/output", wrapper.GetTestResult)
 	app.GET("/ui", func(c echo.Context) error {
 		flakes, err := api.flakyTests()
 		if err != nil {
@@ -51,15 +52,28 @@ func New(db *sqlx.DB, token string) *echo.Echo {
 			"Flakes": flakes,
 		})
 	})
-	app.GET("/ui/test/:name/fails", func(c echo.Context) error {
-		name := c.Param("name")
-		fails, err := api.failedBuilds(name)
+	app.GET("/ui/test/:id/fails", func(c echo.Context) error {
+		testID := c.Param("id")
+		test, err := api.failedBuilds(testID)
 		if err != nil {
 			return err
 		}
 		return c.Render(http.StatusOK, "fails.html", map[string]interface{}{
-			"Title": "Failed Builds " + name,
-			"Fails": fails,
+			"Title":   "Failed Builds " + test.Name,
+			"TestId":  testID,
+			"Results": test.Results,
+		})
+	})
+	app.GET("/ui/test/:test_id/upload/:upload_id", func(c echo.Context) error {
+		testID := c.Param("test_id")
+		uploadID := c.Param("upload_id")
+		result, err := api.testResult(testID, uploadID)
+		if err != nil {
+			return err
+		}
+		return c.Render(http.StatusOK, "result.html", map[string]interface{}{
+			"Title":  "Test result for " + result.Name,
+			"Result": result,
 		})
 	})
 	app.StaticFS("/ui", asset.Static)

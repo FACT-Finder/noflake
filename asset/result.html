@@ -1,0 +1,20 @@
+{{template "start" .}}
+<div>
+    <a href="/ui/test/{{.Result.TestId}}/fails">Show all failures for this test</a>
+</div>
+<br />
+<table>
+  <tr><td>Name</td><td>{{.Result.Name}}</td></tr>
+  <tr><td>Commit</td><td>{{.Result.CommitSHA}}</td></tr>
+  <tr><td>Success</td><td>{{.Result.Success}}</td>
+  <tr><td>Build</td><td><a href="{{.Result.Url}}">{{.Result.Url}}</a></td>
+</table>
+<br />
+<div>
+  <div><b>Output:</b></div>
+  <pre>
+  {{.Result.Output}}
+  </pre>
+</div>
+{{template "end" .}}
+{{.Output}}

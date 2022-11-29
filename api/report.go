@@ -80,9 +80,9 @@ func (a *api) AddReport(ctx echo.Context, commitSha string, params AddReportPara
 			fmt.Sprintf("couldn't store test results: %s", err))
 	}
 
-	err = database.UpdateFlakyTests(a.db, *commit)
+	err = database.UpdateFlakyTests(a.db, *commit.ID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest,
+		return echo.NewHTTPError(http.StatusInternalServerError,
 			fmt.Sprintf("couldn't update flaky tests: %s", err))
 	}
 

@@ -7,27 +7,27 @@ import (
 )
 
 type TestFailure struct {
+	UploadID  int       `db:"upload_id"`
 	Date      time.Time `db:"last_fail"`
-	Output    *string   `db:"output"`
 	CommitSHA string    `db:"commit_sha"`
 	URL       *string   `db:"url"`
 }
 
-func GetFailures(db *sqlx.DB, name string) ([]TestFailure, error) {
+func GetFailures(db *sqlx.DB, testID int) ([]TestFailure, error) {
 	rows, err := db.Queryx(`
 	SELECT
+		uploads.id as upload_id,
 		commits.commit_sha,
 		uploads.url,
-		results.output,
 		uploads.time
 	from results
 	LEFT JOIN commits on commits.id = results.commit_id
 	LEFT JOIN uploads on uploads.id = results.upload_id
 	LEFT JOIN tests on tests.id = results.test_id
 	WHERE
-		tests.name = ? and results.success = 0
+		tests.id = ? and results.success = 0
 	ORDER BY uploads.time desc
-	`, name)
+	`, testID)
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +36,7 @@ func GetFailures(db *sqlx.DB, name string) ([]TestFailure, error) {
 	for rows.Next() {
 		var failure TestFailure
 		var dateTimestamp int64
-		err = rows.Scan(&failure.CommitSHA, &failure.URL, &failure.Output, &dateTimestamp)
+		err = rows.Scan(&failure.UploadID, &failure.CommitSHA, &failure.URL, &dateTimestamp)
 		if err != nil {
 			return nil, err
 		}

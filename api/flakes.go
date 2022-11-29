@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/FACT-Finder/noflake/database"
@@ -17,11 +18,13 @@ func (a *api) flakyTests() ([]FlakyTest, error) {
 	flakes := []FlakyTest{}
 
 	for _, test := range tests {
+		name := test.Name
 		totalFails := test.TotalFails
 		lastFail := test.LastFail
 		lastFailStr := lastFail.UTC().Format(time.RFC3339)
+		idStr := strconv.Itoa(test.ID)
 		flakes = append(flakes,
-			FlakyTest{Test: test.Name, TotalFails: &totalFails, LastFail: &lastFailStr})
+			FlakyTest{Id: idStr, Name: name, TotalFails: &totalFails, LastFail: &lastFailStr})
 	}
 
 	return flakes, nil

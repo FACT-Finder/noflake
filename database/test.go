@@ -80,7 +80,7 @@ func InsertTests(db *sqlx.DB, tests []model.TestResult, upload model.Upload) err
 	return nil
 }
 
-func UpdateFlakyTests(db *sqlx.DB, commit model.Commit) error {
+func UpdateFlakyTests(db *sqlx.DB, commitID int) error {
 	stmt, err := db.Preparex(`
 	UPDATE tests SET flaky = true
 		WHERE tests.id in (
@@ -95,13 +95,14 @@ func UpdateFlakyTests(db *sqlx.DB, commit model.Commit) error {
 		return err
 	}
 
-	_, err = stmt.Exec(commit.ID)
+	_, err = stmt.Exec(commitID)
 	return err
 }
 
 func GetFlakyTests(db *sqlx.DB) ([]FlakyTest, error) {
 	rows, err := db.Queryx(`
 	SELECT
+		tests.id AS test_id,
 		tests.name AS name,
 		count(results.success) as total_fails,
 		MAX(uploads.time) as last_fail
@@ -120,7 +121,7 @@ func GetFlakyTests(db *sqlx.DB) ([]FlakyTest, error) {
 	for rows.Next() {
 		var test FlakyTest
 		var lastFailTimestamp int64
-		err = rows.Scan(&test.Name, &test.TotalFails, &lastFailTimestamp)
+		err = rows.Scan(&test.ID, &test.Name, &test.TotalFails, &lastFailTimestamp)
 		if err != nil {
 			return nil, err
 		}
@@ -131,7 +132,49 @@ func GetFlakyTests(db *sqlx.DB) ([]FlakyTest, error) {
 	return tests, nil
 }
 
+func GetTestName(db *sqlx.DB, testID int) (string, error) {
+	name := ""
+	err := db.QueryRowx(
+		`SELECT tests.name from tests WHERE tests.id = ?
+	`, testID).Scan(&name)
+
+	return name, err
+}
+
+type TestResult struct {
+	UploadID  int     `db:"upload_id"`
+	TestID    int     `db:"test_id"`
+	Name      string  `db:"test_name"`
+	CommitSHA string  `db:"commit_sha"`
+	URL       *string `db:"url"`
+	Success   bool    `db:"success"`
+	Output    *string `db:"test_output"`
+	Date      string  `db:"time"`
+}
+
+func GetTestResult(db *sqlx.DB, testID, uploadID int) (TestResult, error) {
+	output := TestResult{UploadID: uploadID, TestID: testID}
+	err := db.QueryRowx(`
+	SELECT
+		tests.name as test_name,
+		commits.commit_sha,
+		uploads.url,
+		results.success,
+		results.output as test_output,
+		uploads.time
+	from results
+	LEFT JOIN commits on commits.id = results.commit_id
+	LEFT JOIN tests on tests.id = results.test_id
+	LEFT JOIN uploads on uploads.id = results.upload_id
+	WHERE
+		results.test_id = ? and results.upload_id = ?
+	`, testID, uploadID).StructScan(&output)
+
+	return output, err
+}
+
 type FlakyTest struct {
+	ID         int       `db:"test_id"`
 	Name       string    `db:"name"`
 	TotalFails int       `db:"total_fails"`
 	LastFail   time.Time `db:"last_fail"`

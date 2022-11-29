@@ -5,12 +5,14 @@
     <th>Commit</th>
     <th></th>
   </tr>
-  {{ range .Fails }}
+  {{ range .Results }}
   <tr>
     <td>{{.Date}}</td>
     <td>{{.CommitSHA}}</td>
     <td><a href="{{.Url}}">Build</a></td>
+    <td><a href="/ui/test/{{$.TestId}}/upload/{{.UploadId}}">Details</a></td>
   </tr>
   {{ end }}
 </table>
 {{template "end" .}}
+{{.Output}}
