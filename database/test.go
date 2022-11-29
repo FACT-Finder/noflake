@@ -80,22 +80,35 @@ func InsertTests(db *sqlx.DB, tests []model.TestResult, upload model.Upload) err
 	return nil
 }
 
+func UpdateFlakyTests(db *sqlx.DB, commit model.Commit) error {
+	stmt, err := db.Preparex(`
+	UPDATE tests SET flaky = true
+		WHERE tests.id in (
+			SELECT DISTINCT(tests.id), tests.name FROM results
+			LEFT JOIN tests ON tests.id = results.test_id
+			WHERE results.commit_id == ?
+			GROUP BY results.test_id
+			HAVING COUNT(DISTINCT results.success) > 1
+		)
+	`)
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec(commit.ID)
+	return err
+}
+
 func GetFlakyTests(db *sqlx.DB) ([]FlakyTest, error) {
 	rows, err := db.Queryx(`
-	WITH flaky_tests (id, name) AS (
-		SELECT DISTINCT(tests.id), tests.name FROM results
-		LEFT JOIN tests ON tests.id = results.test_id
-		GROUP BY results.test_id, results.commit_id
-		HAVING COUNT(DISTINCT results.success) > 1
-	)
 	SELECT
-		flaky_tests.name AS name,
+		tests.name AS name,
 		count(results.success) as total_fails,
 		MAX(uploads.time) as last_fail
 	FROM results
-	JOIN flaky_tests ON results.test_id = flaky_tests.id
+	JOIN tests ON results.test_id = tests.id
 	LEFT JOIN uploads ON uploads.id = results.upload_id
-	WHERE results.success == false
+	WHERE tests.flaky == true AND results.success == false
 	GROUP BY test_id
 	ORDER BY last_fail desc
 	`)
