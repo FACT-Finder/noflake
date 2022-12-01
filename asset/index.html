@@ -1,15 +1,22 @@
 {{template "start" .}}
+<form method="get">
+    Flaky tests of the last <input name="lastNDays" type="number" value="{{.LastNDays}}" /> days
+    <input type="submit" value="Submit" />
+</form>
+<br />
 <table>
   <tr>
-    <th>Last Failure</th>
-    <th>Total Failures</th>
     <th>Test</th>
+    <th>Successes</th>
+    <th>Fails</th>
+    <th>Score</th>
   </tr>
   {{ range .Flakes }}
   <tr>
-    <td>{{.LastFail}}</td>
-    <td>{{.TotalFails}}</td>
     <td><a href="/ui/test/{{.Id}}/fails">{{.Name}}</a></td>
+    <td>{{.SuccessCount}}</td>
+    <td>{{.FailCount}}</td>
+    <td>{{.Score}}</td>
   </tr>
   {{ end }}
 </table>

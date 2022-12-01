@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/FACT-Finder/noflake/asset"
@@ -43,13 +44,24 @@ func New(db *sqlx.DB, token string) *echo.Echo {
 	app.GET("/test/:id/fails", wrapper.GetFailedBuilds)
 	app.GET("/test/:test_id/upload/:upload_id/output", wrapper.GetTestResult)
 	app.GET("/ui", func(c echo.Context) error {
-		flakes, err := api.flakyTests()
+		lastNDaysStr := c.QueryParam("lastNDays")
+		lastNDays := 14
+		var err error
+		if lastNDaysStr != "" {
+			lastNDays, err = strconv.Atoi(lastNDaysStr)
+			if err != nil {
+				return err
+			}
+		}
+
+		flakes, err := api.flakyTests(lastNDays)
 		if err != nil {
 			return err
 		}
 		return c.Render(http.StatusOK, "index.html", map[string]interface{}{
-			"Title":  "Overview",
-			"Flakes": flakes,
+			"Title":     "Flaky tests of the last " + strconv.Itoa(lastNDays) + " days",
+			"LastNDays": lastNDays,
+			"Flakes":    flakes,
 		})
 	})
 	app.GET("/ui/test/:id/fails", func(c echo.Context) error {

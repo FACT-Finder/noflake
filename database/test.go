@@ -1,7 +1,7 @@
 package database
 
 import (
-	"time"
+	"strconv"
 
 	"github.com/FACT-Finder/noflake/model"
 	"github.com/jmoiron/sqlx"
@@ -99,20 +99,34 @@ func UpdateFlakyTests(db *sqlx.DB, commitID int) error {
 	return err
 }
 
-func GetFlakyTests(db *sqlx.DB) ([]FlakyTest, error) {
+type FlakyTest struct {
+	ID        int     `db:"test_id"`
+	Name      string  `db:"name"`
+	Successes int     `db:"successes"`
+	Fails     int     `db:"fails"`
+	Score     float32 `db:"score"`
+}
+
+func GetFlakyTests(db *sqlx.DB, lastNDays int) ([]FlakyTest, error) {
 	rows, err := db.Queryx(`
 	SELECT
 		tests.id AS test_id,
 		tests.name AS name,
-		count(results.success) as total_fails,
-		MAX(uploads.time) as last_fail
+		SUM(results.success) AS successes,
+		COUNT(*) - SUM(results.success) AS fails,
+		1-AVG(results.success) AS score
 	FROM results
 	JOIN tests ON results.test_id = tests.id
 	LEFT JOIN uploads ON uploads.id = results.upload_id
-	WHERE tests.flaky == true AND results.success == false
+	WHERE
+		tests.flaky == true
+		AND
+			datetime(uploads.time, 'auto') BETWEEN
+			datetime('now', ?) AND datetime('now', 'localtime')
 	GROUP BY test_id
-	ORDER BY last_fail desc
-	`)
+	HAVING fails > 0
+	ORDER BY score DESC
+	`, strconv.Itoa(-lastNDays)+` days`)
 	if err != nil {
 		return nil, err
 	}
@@ -120,12 +134,10 @@ func GetFlakyTests(db *sqlx.DB) ([]FlakyTest, error) {
 	tests := []FlakyTest{}
 	for rows.Next() {
 		var test FlakyTest
-		var lastFailTimestamp int64
-		err = rows.Scan(&test.ID, &test.Name, &test.TotalFails, &lastFailTimestamp)
+		err = rows.StructScan(&test)
 		if err != nil {
 			return nil, err
 		}
-		test.LastFail = time.Unix(lastFailTimestamp, 0)
 		tests = append(tests, test)
 	}
 
@@ -171,11 +183,4 @@ func GetTestResult(db *sqlx.DB, testID, uploadID int) (TestResult, error) {
 	`, testID, uploadID).StructScan(&output)
 
 	return output, err
-}
-
-type FlakyTest struct {
-	ID         int       `db:"test_id"`
-	Name       string    `db:"name"`
-	TotalFails int       `db:"total_fails"`
-	LastFail   time.Time `db:"last_fail"`
 }
