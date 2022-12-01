@@ -32,26 +32,55 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ApiError"
-  /test/{name}/fails:
+  /test/{id}/fails:
     get:
       operationId: getFailedBuilds
       summary: Get the list of failed builds
       parameters:
         - in: path
-          name: name
+          name: id
           schema:
             type: string
           required: true
-          description: The test name
+          description: The test id
       responses:
         "200":
           description: Ok
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/FailedBuild"
+                $ref: "#/components/schemas/TestResults"
+        default:
+          description: >-
+            Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+  /test/{test_id}/upload/{upload_id}:
+    get:
+      operationId: getTestResult
+      summary: Get the result of a test run
+      parameters:
+        - in: path
+          name: test_id
+          schema:
+            type: string
+          required: true
+          description: The test id
+        - in: path
+          name: upload_id
+          schema:
+            type: string
+          required: true
+          description: The upload id
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TestResult"
         default:
           description: >-
             Error
@@ -107,9 +136,13 @@ components:
           "test": "mytest"
         }
       required:
-        - test
+        - id
+        - name
       properties:
-        test:
+        id:
+          type: string
+          description: The test id
+        name:
           type: string
           description: The name of the test
         last_fail:
@@ -118,24 +151,58 @@ components:
         total_fails:
           type: integer
           description: The total number of failures
-    FailedBuild:
+    TestResults:
       type: object
       required:
+        - test_id
+        - name
+        - results
+      properties:
+        test_id:
+          type: string
+          description: The test id
+        name:
+          type: string
+          description: The test name
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/TestResult"
+          description: The results of the test
+    TestResult:
+      type: object
+      required:
+        - test_id
+        - upload_id
+        - name
         - commitSHA
         - date
+        - success
       properties:
+        test_id:
+          type: string
+          description: The test id
+        upload_id:
+          type: string
+          description: The upload id
+        name:
+          type: string
+          description: The name of the test
         commitSHA:
           type: string
           description: The commit sha of the failed build
+        date:
+          type: string
+          description: The time of the failed build
         url:
           type: string
           description: The url of the failed build
-        date:
-          type: string
-          description: The time of the failed failure
+        success:
+          type: boolean
+          description: Whether or not the test passed
         output:
           type: string
-          description: The test output
+          description: The output of the test run
     ApiError:
       type: object
       required:
