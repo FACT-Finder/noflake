@@ -16,6 +16,13 @@ paths:
     get:
       operationId: getFlakyTests
       summary: Get the list of known flaky tests
+      parameters:
+        - in: query
+          name: lastNDays
+          schema:
+            type: integer
+          default: 14
+          description: Only consider test runs in the lastNDays days
       responses:
         "200":
           description: Ok
@@ -138,6 +145,9 @@ components:
       required:
         - id
         - name
+        - success_count
+        - fail_count
+        - score
       properties:
         id:
           type: string
@@ -145,12 +155,15 @@ components:
         name:
           type: string
           description: The name of the test
-        last_fail:
-          type: string
-          description: The time of the last failure
-        total_fails:
+        success_count:
           type: integer
-          description: The total number of failures
+          description: The number of failures
+        fail_count:
+          type: integer
+          description: The number of successes
+        score:
+          type: number
+          description: The flaky score of the test
     TestResults:
       type: object
       required:
