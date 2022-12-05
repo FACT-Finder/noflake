@@ -18,7 +18,7 @@ func Register(e *echo.Echo, spec *openapi3.T) {
 	g := e.Group("/docs")
 
 	spec.Servers = openapi3.Servers{{
-		URL:         "./",
+		URL:         "../",
 		Description: "Current server",
 	}}
 	specJSON, err := spec.MarshalJSON()

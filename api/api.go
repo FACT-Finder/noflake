@@ -15,7 +15,6 @@ import (
 
 func New(db *sqlx.DB, token string) *echo.Echo {
 	app := echo.New()
-	app.Pre(middleware.RemoveTrailingSlash())
 	app.Use(middleware.Recover())
 	app.Renderer = asset.Renderer
 	app.HTTPErrorHandler = func(err error, c echo.Context) {
