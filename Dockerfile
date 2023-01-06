@@ -1,5 +1,6 @@
-FROM alpine:3.16
-WORKDIR /opt/noflake
+FROM alpine:3.17
+WORKDIR /var/lib/noflake
+RUN mkdir /opt/noflake
 ADD noflake /opt/noflake
 EXPOSE 8000
-ENTRYPOINT ["./noflake"]
+ENTRYPOINT ["/opt/noflake/noflake"]
