@@ -38,18 +38,11 @@ sorted by the number of fails relative to the total test invocations.
 Noflake is written in Go with an API first approach and SQLite3 as database.
 
 It uses [oapi-codegen](https://github.com/deepmap/oapi-codegen) to generate
-DTOs and interfaces for the API. You can install it with
-
-```bash
-go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@v1.11.0
-```
-
-and use it with `go generate`. Make sure that your `$PATH` includes the go
-binary directory which is either `$(go env GOBIN)` or `$(go env GOPATH)/bin`
-(usually `~/go/bin`).
+DTOs and interfaces for the API.
 
 If you want to change or extend the API, edit `./openapi.yaml` first, then run
-`go generate`. Now `go build` usually fails with an error, e.g.
+`go generate` - this invokes oapi-codegen. Now `go build` usually fails with an
+error, e.g.
 
 ```
 $ go build
