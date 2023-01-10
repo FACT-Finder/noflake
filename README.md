@@ -73,3 +73,39 @@ the `database/migrations` folder. Update `model/model.go` and all usages of the
 models accordingly. The not yet applied migrations are automatically executed
 on app startup. You can also manually migrate up and down using the
 [golang-migrate cli](https://github.com/golang-migrate/migrate#cli-usage).
+
+### Building the docker image
+
+If you merge changes, Github will automatically build a new docker image. But
+if you want to build the image locally, you use go build with some
+extra flags to create a static binary that works in the alpine container.
+
+```bash
+$ go build -tags netgo,osusergo -ldflags="-s -w -extldflags=-static"
+# github.com/FACT-Finder/noflake
+/usr/bin/ld: /tmp/go-link-3319491090/000010.o: in function `unixDlOpen':
+/home/thomas/src/go/pkg/mod/github.com/mattn/go-sqlite3@v1.14.13/sqlite3-binding.c:41392: warning: Using 'dlopen' in statically linked applications requires at runtime the shared libraries from the glibc version used for linking
+$ ldd noflake
+        not a dynamic executable
+$ docker build --tag noflake:local .
+Sending build context to Docker daemon  2.332GB
+Step 1/6 : FROM alpine:3.17
+ ---> 49176f190c7e
+Step 2/6 : WORKDIR /var/lib/noflake
+ ---> Using cache
+ ---> 5703c60ff171
+Step 3/6 : RUN mkdir /opt/noflake
+ ---> Using cache
+ ---> a509c9a1c229
+Step 4/6 : ADD noflake /opt/noflake
+ ---> Using cache
+ ---> e4b0ad30903d
+Step 5/6 : EXPOSE 8000
+ ---> Using cache
+ ---> 58dde83e08a9
+Step 6/6 : ENTRYPOINT ["/opt/noflake/noflake"]
+ ---> Using cache
+ ---> 76ad7efec763
+Successfully built 76ad7efec763
+Successfully tagged noflake:local
+```
