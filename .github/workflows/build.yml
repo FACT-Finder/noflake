@@ -19,10 +19,26 @@ jobs:
       - run: go generate ./...
       - run: go test ./...
       - run: go build
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v2
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-go@v4
         with:
-          version: v1.46
+          go-version: 1.18.x
+          cache: false
+      - uses: actions/checkout@v3
+      - run: go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@v1.11.0
+      - run: go generate ./...
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.52
+
+  release:
+    needs: [build, lint]
+    runs-on: ubuntu-latest
+    steps:
       - if: startsWith(github.ref, 'refs/tags/v')
         run: echo "$DOCKER_PASS" | docker login ghcr.io --username "$DOCKER_USER" --password-stdin
         env:
