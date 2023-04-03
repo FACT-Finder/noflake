@@ -84,7 +84,7 @@ func UpdateFlakyTests(db *sqlx.DB, commitID int) error {
 	stmt, err := db.Preparex(`
 	UPDATE tests SET flaky = true
 		WHERE tests.id in (
-			SELECT DISTINCT(tests.id), tests.name FROM results
+			SELECT DISTINCT(tests.id) FROM results
 			LEFT JOIN tests ON tests.id = results.test_id
 			WHERE results.commit_id == ?
 			GROUP BY results.test_id
