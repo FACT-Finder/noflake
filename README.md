@@ -109,3 +109,8 @@ Step 6/6 : ENTRYPOINT ["/opt/noflake/noflake"]
 Successfully built 76ad7efec763
 Successfully tagged noflake:local
 ```
+
+### Releasing a new version
+
+Please create a new release [via GitHub](https://github.com/FACT-Finder/noflake/releases/new) on a new tag. 
+This will trigger our release workflow which pushes the newest image to the docker registry.
