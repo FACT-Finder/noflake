@@ -2,6 +2,8 @@ project_name: noflake
 before:
   hooks:
     - go mod download
+    - go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@v1.11.0
+    - go generate ./...
 builds:
   - goos:
       - linux
