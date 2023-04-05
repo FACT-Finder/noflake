@@ -18,7 +18,7 @@ sorted by the number of fails relative to the total test invocations.
     docker run \
         -v $PWD:/var/lib/noflake \
         -p 8000:8000 \
-        ghcr.io/fact-finder/noflake:0.1.0 \
+        ghcr.io/fact-finder/noflake:0.0.10 \
         --token verysecuretoken
    ```
 2. Upload junit reports from your CI server after every test execution. For a
